@@ -1,1 +1,1 @@
-# kodi
+# addon Relict-Sovok.TV for Kodi
