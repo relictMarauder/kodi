@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.relict.sovok.tv"
+       name="Relict-Sovok.TV"
+       version="0.0.1"
+       provider-name="Alexander Bonelis">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"
+             provides="video"
+             library="default.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>Онлайн-телевидение Sovok.TV</summary>
+    <description>Онлайн-телевидение Sovok.TV: более 200 русскоязычных каналов (более 25 HD) от 7 евро в месяц</description>
+    <platform>all</platform>
+  </extension>
+</addon>
