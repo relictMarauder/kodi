@@ -221,13 +221,17 @@ def list_group_entries(params):
                 url = plugin.get_url(action=u'list_channel',
                                      channel_id=channel[u'id'])
                 is_playable = False
+            elif plugin.get_setting('hide_channels_wo_archives'):
+                continue
+        elif plugin.get_setting('hide_channels_wo_archives'):
+            continue
         live_entry = get_live_channel_entry(channel, epg_cache)
         live_entry[u'context_menu'] = get_default_context_menu(u'list_group', params)
         live_entry[u'is_playable'] = is_playable
         live_entry[u'label'] = u'%s %s %s' % (prefix, live_entry[u'label'], prefix)
         live_entry[u'url'] = url
         listing.append(live_entry)
-    plugin.log('end generate list')
+    plugin.log('end generate list %s' % plugin.get_setting('hide_channels_wo_archives'))
     return listing
 
 

@@ -1,6 +1,6 @@
 <settings>
    <setting id="login" type="text" label="login" default="1111"/>
    <setting id="password" type="text" label="password" option="hidden" default="1111"/>
-   <setting id="safe" type="bool" label="safe mode" default="false"/>
+   <setting id="hide_channels_wo_archives" type="bool" label="hide channels without archives" default="false"/>
    <setting id="guess_aspect_ratio" type="bool" label="guess aspect ration" default="true" />
 </settings>
