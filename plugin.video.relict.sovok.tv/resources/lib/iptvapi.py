@@ -197,6 +197,17 @@ class SovokApi:
     def _get_channel_list(self):
         return self.send_request(u'channel_list', None)
 
+    def _get_favorites(self):
+        return self.send_request(u'favorites', None)
+
+
+    def get_favorites_list(self):
+        remote_favorites = self._get_favorites()
+        ch_list = []
+        for fav in remote_favorites[u'favorites']:
+            ch_list.append(self.get_channel(fav[u'channel_id']))
+        return ch_list
+
     def get_groups_list(self):
         groups = self.db.get_groups()
         if groups is None:
@@ -223,7 +234,7 @@ class SovokApi:
 
     def _get_day_epg(self, day):
         start_time = datetime(year=day.year, month=day.month, day=day.day) \
-                     + timedelta(hours=-2)
+                     + timedelta(hours=2)
         d_time = time.mktime(start_time.timetuple())
         all_epg_cache = self.send_request(u'epg3',
                                           {
@@ -319,6 +330,10 @@ class SovokApi:
     def get_time_zone(self):
         time_zone = self.get_setting(None)[u'timezone']
         return self.parseTimeDelta(time_zone)
+
+    def set_channel_to_favorites(self, channel_id):
+        result = self.send_request(u'favorites_set', ({u'cid': channel_id}))
+        return result
 
     def set_setting(self, _type, value):
         self.plugin.log(u'Set setting %s to %s ' % (_type, value))

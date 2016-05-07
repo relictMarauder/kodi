@@ -15,6 +15,16 @@ class epg_db:
     def init_shema(self):
         cursor = self.db.cursor()
         cursor.execute(
+            '''CREATE TABLE IF NOT EXISTS program_favorites
+            (id INTEGER PRIMARY KEY NOT NULL, created INTEGER ,epg_id TEXT,
+            FOREIGN KEY(epg_id)  REFERENCES epg(id),
+            UNIQUE (program_favorites_id) ON CONFLICT IGNORE)''')
+        cursor.execute(
+            '''CREATE TABLE IF NOT EXISTS last_programs
+            (id INTEGER PRIMARY KEY NOT NULL, created INTEGER ,epg_id TEXT,
+            FOREIGN KEY(epg_id)  REFERENCES epg(id),
+           UNIQUE (epg_id) ON CONFLICT IGNORE)''')
+        cursor.execute(
             '''CREATE TABLE IF NOT EXISTS groups
 
             (id INTEGER PRIMARY KEY NOT NULL, created INTEGER ,color TEXT, group_id TEXT, name TEXT,
@@ -36,9 +46,9 @@ class epg_db:
             UNIQUE (channel_id,ut_start) ON CONFLICT IGNORE,
             FOREIGN KEY(channel_id)  REFERENCES channels(id))''')
         cursor.execute(
-            '''CREATE INDEX IF NOT EXISTS idx_epg ON epg (ut_start);''')
+            '''CREATE INDEX IF NOT EXISTS idx_epg ON epg (ut_start)''')
         cursor.execute(
-            '''CREATE INDEX IF NOT EXISTS idx_epg ON epg (channel_id,ut_start);''')
+            '''CREATE INDEX IF NOT EXISTS idx_epg ON epg (channel_id,ut_start)''')
         cursor.execute(
             '''CREATE TABLE IF NOT EXISTS epg_full_status
             (id INTEGER PRIMARY KEY NOT NULL, epg_day INTEGER, created INTEGER)''')
@@ -149,7 +159,7 @@ class epg_db:
             if id_existed_group_row is None:
                 group_inserts.append(group_obj)
             else:
-                updateObj =group_obj + (id_existed_group_row[0],)
+                updateObj = group_obj + (id_existed_group_row[0],)
                 group_updates.append(updateObj)
         if len(group_inserts) > 0:
             result_group_inserts = self.db.executemany("INSERT INTO groups "
@@ -177,11 +187,12 @@ class epg_db:
                     str(channel[u'epg_start']),
                     channel[u'sprite_pos']
                 )
-                id_existed_channel_row = self.db.execute("SELECT id FROM channels WHERE channel_id=?", [channel[u'id']]).fetchone()
+                id_existed_channel_row = self.db.execute("SELECT id FROM channels WHERE channel_id=?",
+                                                         [channel[u'id']]).fetchone()
                 if id_existed_channel_row is None:
                     channel_inserts.append(channel_obj)
                 else:
-                    channels_updates.append(channel_obj+(id_existed_channel_row[0],))
+                    channels_updates.append(channel_obj + (id_existed_channel_row[0],))
         if len(channel_inserts) > 0:
             self.db.executemany(
                 "INSERT INTO channels "
@@ -213,20 +224,101 @@ class epg_db:
             mapping_inserts)
         self.db.commit()
 
+    def add_program_favorites(self, epg_id):
+        add_time = int(time.mktime(datetime.datetime.now().timetuple()))
+        self.db.execute('INSERT  INTO '
+                        'program_favorites(epg_id, created) '
+                        'VALUES (?,?)',
+                        [epg_id, add_time])
+        self.db.commit()
+
+    def remove_from_program_favorites(self, epg_id):
+        self.db.execute('DELETE FROM '
+                        'program_favorites '
+                        'WHERE epg_id=?',
+                        [epg_id])
+        self.db.commit()
+
+    def add_last_program(self, epg_id):
+        add_time = int(time.mktime(datetime.datetime.now().timetuple()))
+        self.db.execute('INSERT  INTO '
+                        'last_programs(epg_id, created) '
+                        'VALUES (?,?)',
+                        [epg_id, add_time])
+        self.db.commit()
+
+    def clean_last_program(self):
+
+        self.db.execute('DELETE FROM '
+                        'last_programs '
+                        'WHERE id not in  (select lp.id from last_programs as lp order by lp.created DESC LIMIT 20)')
+        self.db.commit()
+
     def get_day_epg(self, channel_id, day):
         start_time = int(time.mktime(day.timetuple()))
         end_time = int(time.mktime((day + datetime.timedelta(days=1)).timetuple()))
         epgs = []
-        for epg_row in self.db.execute("SELECT epg.description,epg.progname, epg.t_start, epg.ut_start FROM epg "
+        for epg_row in self.db.execute("SELECT epg.description,epg.progname, epg.t_start, epg.ut_start, epg.id ,"
+                                       "program_favorites.id FROM epg "
                                        "INNER JOIN channels ON channels.id=epg.channel_id "
-                                       "WHERE channels.channel_id=? AND ut_start BETWEEN ? AND ? "
+                                       "LEFT OUTER JOIN  program_favorites ON program_favorites.epg_id=epg.id "
+                                       "WHERE channels.channel_id=? AND ut_start BETWEEN ? AND ?  "
                                        "ORDER BY ut_start",
                                        (str(channel_id), start_time, end_time)):
             epgs.append({
                 u'descriptions': epg_row[0],
                 u'progname': epg_row[1],
                 u't_start': epg_row[2],
-                u'ut_start': epg_row[3]
+                u'ut_start': epg_row[3],
+                u'is_favorites': epg_row[5],
+                u'id': epg_row[4],
+                u'channel_id': channel_id
+            })
+
+        if len(epgs) > 0:
+            return epgs
+        return None
+
+    def get_last_programs(self):
+        epgs = []
+        self.clean_last_program()
+        for epg_row in self.db.execute("SELECT epg.description,epg.progname, epg.t_start, epg.ut_start, epg.id ,"
+                                       "last_programs.id, "
+                                       "channels.channel_id FROM epg "
+                                       "INNER JOIN last_programs ON last_programs.epg_id=epg.id "
+                                       "INNER JOIN channels ON channels.id=epg.channel_id "
+                                       "ORDER BY last_programs.created DESC "):
+            epgs.append({
+                u'descriptions': epg_row[0],
+                u'progname': epg_row[1],
+                u't_start': epg_row[2],
+                u'ut_start': epg_row[3],
+                u'id': epg_row[4],
+                u'is_favorites': None,
+                u'channel_id': epg_row[6]
+            })
+
+        if len(epgs) > 0:
+            return epgs
+        return None
+
+    def get_program_favorites(self):
+        epgs = []
+
+        for epg_row in self.db.execute("SELECT epg.description,epg.progname, epg.t_start, epg.ut_start, epg.id ,"
+                                       "program_favorites.id, "
+                                       "channels.channel_id FROM epg "
+                                       "INNER JOIN program_favorites ON program_favorites.epg_id=epg.id "
+                                       "INNER JOIN channels ON channels.id=epg.channel_id "
+                                       "ORDER BY ut_start"):
+            epgs.append({
+                u'descriptions': epg_row[0],
+                u'progname': epg_row[1],
+                u't_start': epg_row[2],
+                u'ut_start': epg_row[3],
+                u'id': epg_row[4],
+                u'is_favorites': epg_row[5],
+                u'channel_id': epg_row[6]
             })
 
         if len(epgs) > 0:
@@ -235,7 +327,10 @@ class epg_db:
 
     def get_current_prog(self, channel_id):
         current_time = int(time.mktime(datetime.datetime.now().timetuple()))
-        epg_row = self.db.execute("SELECT epg.description,epg.progname, epg.t_start, epg.ut_start FROM epg "
+        epg_row = self.db.execute("SELECT epg.description,epg.progname, epg.t_start, epg.ut_start , epg.id, "
+                                  "program_favorites.id "
+                                  "FROM epg "
+                                  "LEFT OUTER JOIN  program_favorites ON program_favorites.epg_id=epg.id "
                                   "INNER JOIN channels ON channels.id=epg.channel_id "
                                   "WHERE channels.channel_id=? AND ut_start < ? ORDER BY ut_start DESC LIMIT 1",
                                   (str(channel_id), current_time)).fetchone()
@@ -245,7 +340,10 @@ class epg_db:
                 u'descriptions': epg_row[0],
                 u'progname': epg_row[1],
                 u't_start': epg_row[2],
-                u'ut_start': epg_row[3]
+                u'ut_start': epg_row[3],
+                u'id': epg_row[4],
+                u'is_favorites': epg_row[5],
+                u'channel_id': channel_id
             }
         return epg_item
 
@@ -361,6 +459,8 @@ class epg_db:
         self.db.execute('''DELETE FROM login_info''')
 
     def clear(self):
+        self.db.execute('''DELETE FROM last_programs''')
+        self.db.execute('''DELETE FROM program_favorites''')
         self.db.execute('''DELETE FROM channel_to_group''')
         self.db.execute('''DELETE FROM epg''')
         self.db.execute('''DELETE FROM epg_status''')
