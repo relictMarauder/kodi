@@ -17,8 +17,7 @@ class epg_db:
         cursor.execute(
             '''CREATE TABLE IF NOT EXISTS program_favorites
             (id INTEGER PRIMARY KEY NOT NULL, created INTEGER ,epg_id TEXT,
-            FOREIGN KEY(epg_id)  REFERENCES epg(id),
-            UNIQUE (program_favorites_id) ON CONFLICT IGNORE)''')
+            FOREIGN KEY(epg_id)  REFERENCES epg(id))''')
         cursor.execute(
             '''CREATE TABLE IF NOT EXISTS last_programs
             (id INTEGER PRIMARY KEY NOT NULL, created INTEGER ,epg_id TEXT,
