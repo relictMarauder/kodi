@@ -1,0 +1,12 @@
+0.0.5
+using archive hours for checking archive availability
+not available archives using italic font (too old or to early)
+showing only days with available archives
+0.0.4
+small fix
+0.0.3
+Add favorites: channles,programs,last 20 viewed programs
+0.0.2
+Add setting "hide channels without archives"
+0.0.1
+Initial verison
