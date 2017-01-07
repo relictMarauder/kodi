@@ -57,6 +57,11 @@ class epg_db:
         cursor.execute(
             '''CREATE TABLE IF NOT EXISTS login_info
             (id INTEGER PRIMARY KEY NOT NULL, login TEXT, login_time INTEGER, pwd TEXT, sid TEXT, sid_name TEXT )''')
+        cursor.execute(
+            '''CREATE TABLE IF NOT EXISTS archive_channels_info
+            (id INTEGER PRIMARY KEY NOT NULL, created INTEGER,  channel_id INTEGER, archive_hours INTEGER,
+            UNIQUE (channel_id) ON CONFLICT IGNORE,
+            FOREIGN KEY(channel_id)  REFERENCES channels(id))''')
         self.db.commit()
 
     def set_login_info(self, login_info):
@@ -143,6 +148,23 @@ class epg_db:
                                     "VALUES(?,?,?,?,?,?)",
                                     epg_inserts)
 
+        self.db.commit()
+
+    def import_archive_channels_list(self, archive_channels_list):
+        import_time = int(time.mktime(datetime.datetime.now().timetuple()))
+        self.db.execute('''DELETE FROM archive_channels_info''')
+        self.db.commit()
+        info_inserts = []
+        for channel_archive_info in archive_channels_list[u'have_archive_list']:
+            channel_row = self.db.execute("SELECT id FROM channels WHERE channel_id=?",
+                                          [str(channel_archive_info[u'id'])]).fetchone()
+            if channel_row is not None:
+                channel_id = channel_row[0]
+                info_inserts.append((import_time, channel_id, int(channel_archive_info[u'archive_hours'])))
+        self.db.executemany("INSERT OR REPLACE "
+                            "INTO archive_channels_info (created,channel_id,archive_hours) "
+                            "VALUES(?,?,?)",
+                            info_inserts)
         self.db.commit()
 
     def import_channel_list(self, channel_list):
@@ -250,8 +272,28 @@ class epg_db:
 
         self.db.execute('DELETE FROM '
                         'last_programs '
-                        'WHERE id not in  (select lp.id from last_programs as lp order by lp.created DESC LIMIT 20)')
+                        'WHERE id NOT IN  (SELECT lp.id FROM last_programs AS lp ORDER BY lp.created DESC LIMIT 20)')
         self.db.commit()
+
+    def is_archive_channels_info_valid(self):
+        channel_row = self.db.execute("SELECT created FROM archive_channels_info").fetchone()
+
+    def get_archive_hours(self, channel_id):
+        import_time = int(time.mktime(datetime.datetime.now().timetuple()))
+        cleanup_time = int(time.mktime((datetime.datetime.now() - datetime.timedelta(days=1)).timetuple()))
+
+        channel_row = self.db.execute("SELECT archive_channels_info.archive_hours FROM archive_channels_info "
+                                      "INNER JOIN channels ON channels.id=archive_channels_info.channel_id "
+                                      "WHERE channels.channel_id=? AND archive_channels_info.created >= ?",
+                                      [str(channel_id), cleanup_time]).fetchone()
+        if channel_row is not None:
+            return channel_row[0]
+        else:
+            channel_row = self.db.execute("SELECT id FROM archive_channels_info WHERE created >= ? ",
+                                          [cleanup_time]).fetchone()
+            if channel_row is None:
+                return None
+        return 0
 
     def get_day_epg(self, channel_id, day):
         start_time = int(time.mktime(day.timetuple()))

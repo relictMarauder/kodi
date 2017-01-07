@@ -1,3 +1,7 @@
+0.0.5
+using archive hours for checking archive availability
+not available archives using italic font (too old or to early)
+showing only days with available archives
 0.0.4
 small fix
 0.0.3

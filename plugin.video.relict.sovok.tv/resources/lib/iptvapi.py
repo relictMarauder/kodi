@@ -59,7 +59,7 @@ STORAGE_KEY_LOGIN_INFO = u'loginInfo'
 # channel_list_cache_it = fscache.FSCache(xbmc.translatePath('special://temp/relict.sovok.tv/channelList'), days=1)
 # epg_cache_it = fscache.FSCache(xbmc.translatePath('special://temp/relict.sovok.tv/epg'), days=7)
 # ch_epg_cache_it = fscache.FSCache(xbmc.translatePath('special://temp/relict.sovok.tv/ch_epg'), days=7)
-#login_info_cache_it = fscache.FSCache(xbmc.translatePath('special://temp/relict.sovok.tv/login_info'), days=1)
+# login_info_cache_it = fscache.FSCache(xbmc.translatePath('special://temp/relict.sovok.tv/login_info'), days=1)
 settings_cache_it = fscache.FSCache(xbmc.translatePath('special://temp/relict.sovok.tv/settings'), hours=1)
 
 
@@ -197,9 +197,11 @@ class SovokApi:
     def _get_channel_list(self):
         return self.send_request(u'channel_list', None)
 
+    def _get_archive_channels_list(self):
+        return self.send_request(u'archive_channels_list', None)
+
     def _get_favorites(self):
         return self.send_request(u'favorites', None)
-
 
     def get_favorites_list(self):
         remote_favorites = self._get_favorites()
@@ -224,6 +226,16 @@ class SovokApi:
             group = self.db.get_group(group_id)
         return group
 
+    def get_archive_hours(self, channel_id):
+        archive_hours = self.db.get_archive_hours(channel_id)
+        self.plugin.log(u'First retrieving archive hours for channel %s :%s ' % (channel_id, archive_hours))
+        if archive_hours is None:
+            archive_channels_list = self._get_archive_channels_list()
+            self.db.import_archive_channels_list(archive_channels_list)
+            archive_hours = self.db.get_archive_hours(channel_id)
+            self.plugin.log(u'Second retrieving archive hours for channel %s :%s ' % (channel_id, archive_hours))
+        return 0 if archive_hours is None else archive_hours
+
     def get_channel(self, channel_id):
         group, channel = self.db.get_channel(channel_id)
         if group is None:
@@ -247,12 +259,12 @@ class SovokApi:
         all_epg_cache = self._get_day_epg(day)
         return all_epg_cache
 
-    def get_channel_epg_from_cache(self, channel_id, day, all_epg_cache):
-        all_epg = all_epg_cache[u'epg3']
-        self.day_epg_cache = all_epg
-        ch_epg = self.get_channel_epg(channel_id, day)
-        self.day_epg_cache = None
-        return ch_epg
+    # def get_channel_epg_from_cache(self, channel_id, day, all_epg_cache):
+    #     all_epg = all_epg_cache[u'epg3']
+    #     self.day_epg_cache = all_epg
+    #     ch_epg = self.get_channel_epg(channel_id, day)
+    #     self.day_epg_cache = None
+    #     return ch_epg
 
     def get_channel_epg(self, channel_id, day):
         if not self.db.is_channel_epg_loaded(channel_id, day):

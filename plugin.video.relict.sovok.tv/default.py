@@ -2,6 +2,7 @@
 from datetime import datetime
 from datetime import date
 import traceback
+from datetime import timedelta
 from resources.lib.debug import RemoteDebug
 from resources.lib.iptvapi import SovokApi
 from resources.lib.relictPlugin import RelictPlugin
@@ -85,6 +86,7 @@ def list_day_epg_entries(params):
     current_prog = False
     for epg_item in epg_list:
         create_epg_list_item('', channel_id, counter, current_prog, epg_item, epg_list, icon, listing, params)
+        counter += 1
     context = plugin.create_listing(listing)
     # if current_prog:
     #    context[u'focus_item_idx'] = current_prog
@@ -129,27 +131,31 @@ def remove_from_program_favorites(params):
 
 
 def create_epg_list_item(prefix, channel_id, counter, current_prog, epg_item, epg_list, icon, listing, params,
-                         full_date=False):
-    program = ""
+                         full_date=False, archive_hours=None):
+    if archive_hours is None:
+        archive_hours = sovok.get_archive_hours(channel_id)
     counter += 1
+    program = ""
     if u'progname' in epg_item:
         program = epg_item[u'progname']
     program += "\n"
     prog, desc = program.split("\n", 1)
     prog_start = int(epg_item['ut_start'])
     time_label = get_time_label(prog_start, full_date)
+    prog_end = prog_start if len(epg_list) <= counter else epg_list[counter]['ut_start']
+    is_too_old = prog_end < int(time.mktime((datetime.now() - timedelta(hours=archive_hours)).timetuple()))
     can_play = True
     if can_play:
         if prog_start > time.time():
             can_play = False
     title = '%s%s %s %s' % (prefix, time_label, prog, desc)
-    if prog_start < time.time():
+    if prog_start < time.time() and not is_too_old:
         if not current_prog:
             if len(epg_list) > counter:
                 p = epg_list[counter]
                 if int(p['ut_start']) > time.time():
                     title = '[B][COLOR green]%s[/COLOR][/B]' % title
-                    current_prog = counter
+                    current_prog = True
         pass
     else:
         title = '[I]%s[/I]' % title
@@ -236,7 +242,8 @@ def list_channel_entries(params):
     live_entry[u'context_menu'] = get_default_context_menu(u'list_channel', params)
     listing.append(live_entry)
     day = date.today()
-    for i in range(7):
+    archive_hours = sovok.get_archive_hours(channel_id)
+    for i in range(archive_hours / 24 + 1):
         listing.append({
             # u'label': u'[COLOR %s]%s[/COLOR]' % (_resolve_color(group[u'color']), day.strftime('%A %d/%m/%y')),
             u'label': day.strftime('%A %d/%m/%y'),

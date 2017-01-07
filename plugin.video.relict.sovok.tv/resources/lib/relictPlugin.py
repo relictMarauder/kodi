@@ -4,7 +4,6 @@ import xbmcgui
 import xbmc
 from cPickle import dump, load, PickleError
 from datetime import datetime, timedelta
-import copy
 import gzip
 import os
 
