@@ -228,3 +228,6 @@ def fTitle(snum, vnum, title, etitle):
     else:
         ftitle = "%2dx%s. " % (snum, vnum) + etitle
     return ftitle
+
+def showMessage(head, message, times = 10000):
+    xbmc.executebuiltin('XBMC.Notification("%s", "%s", %s, "%s")' % (head.encode('utf-8'), message.encode('utf-8'), times, thumb))

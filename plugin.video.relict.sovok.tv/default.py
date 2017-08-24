@@ -64,7 +64,10 @@ def _resolve_icon_url(channel):
     return icon
 
 
-def get_time_label(prog_start, full_date=False):
+def get_time_label(prog_start_orig, full_date=False, channel_id=None):
+    prog_start = prog_start_orig
+    if channel_id == '710':
+        prog_start -=  0
     if full_date is None or full_date is False:
         return (datetime.utcfromtimestamp(prog_start) + sovok.get_time_zone()).strftime(u'%H:%M')
     else:
@@ -141,7 +144,7 @@ def create_epg_list_item(prefix, channel_id, counter, current_prog, epg_item, ep
     program += "\n"
     prog, desc = program.split("\n", 1)
     prog_start = int(epg_item['ut_start'])
-    time_label = get_time_label(prog_start, full_date)
+    time_label = get_time_label(prog_start, full_date, channel_id)
     prog_end = prog_start if len(epg_list) <= counter else epg_list[counter]['ut_start']
     is_too_old = prog_end < int(time.mktime((datetime.now() - timedelta(hours=archive_hours)).timetuple()))
     can_play = True

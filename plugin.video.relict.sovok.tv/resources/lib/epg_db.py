@@ -278,6 +278,17 @@ class epg_db:
     def is_archive_channels_info_valid(self):
         channel_row = self.db.execute("SELECT created FROM archive_channels_info").fetchone()
 
+    def fix_epg_time(self, channel_id, epg_item):
+        # if channel_id == u'710':
+        #     epg_item[u'ut_start'] += self.get_channel_delta(channel_id)
+        #     epg_item[u't_start'] += datetime.datetime.fromtimestamp(epg_item[u'ut_start']).strftime(',%H:%M')
+        return epg_item
+
+    def get_channel_delta(self, channel_id):
+        if channel_id == u'710':
+            return - 2 * 60 * 60
+        return 0
+
     def get_archive_hours(self, channel_id):
         import_time = int(time.mktime(datetime.datetime.now().timetuple()))
         cleanup_time = int(time.mktime((datetime.datetime.now() - datetime.timedelta(days=1)).timetuple()))
@@ -296,8 +307,8 @@ class epg_db:
         return 0
 
     def get_day_epg(self, channel_id, day):
-        start_time = int(time.mktime(day.timetuple()))
-        end_time = int(time.mktime((day + datetime.timedelta(days=1)).timetuple()))
+        start_time = int(time.mktime(day.timetuple())) - self.get_channel_delta(channel_id)
+        end_time = int(time.mktime((day + datetime.timedelta(days=1)).timetuple())) - self.get_channel_delta(channel_id)
         epgs = []
         for epg_row in self.db.execute("SELECT epg.description,epg.progname, epg.t_start, epg.ut_start, epg.id ,"
                                        "program_favorites.id FROM epg "
@@ -306,7 +317,7 @@ class epg_db:
                                        "WHERE channels.channel_id=? AND ut_start BETWEEN ? AND ?  "
                                        "ORDER BY ut_start",
                                        (str(channel_id), start_time, end_time)):
-            epgs.append({
+            epgs.append(self.fix_epg_time(channel_id, {
                 u'descriptions': epg_row[0],
                 u'progname': epg_row[1],
                 u't_start': epg_row[2],
@@ -314,7 +325,7 @@ class epg_db:
                 u'is_favorites': epg_row[5],
                 u'id': epg_row[4],
                 u'channel_id': channel_id
-            })
+            }))
 
         if len(epgs) > 0:
             return epgs

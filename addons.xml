@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addons>
+<addon id="plugin.video.relict.hdout.tv"
+       name="HDOut.TV"
+       version="0.0.1"
+       provider-name="hdout">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.module.beautifulsoup4" version="4.3.2"/>
+  </requires>
+
+  <extension point="xbmc.python.pluginsource"
+             provides="video"
+             library="default.py">
+    <provides>video</provides>
+  </extension>
+
+  <extension point="xbmc.addon.metadata">
+    <summary>HDOut.TV</summary>
+    <description>HDOut.TV</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
 <addon id="plugin.video.relict.sovok.tv"
        name="Relict-Sovok.TV"
        version="0.0.5"

@@ -1,1 +1,1 @@
-# addon Relict-Sovok.TV for Kodi
+# addon Relict-Sovok.TV and HDOut.TV for Kodi

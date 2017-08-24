@@ -81,7 +81,7 @@ class SovokApi:
         ua = '%s/%s (%s; %s)  iptv/%s user/%s' % (
             is_xbmc, xbmc.getInfoLabel('System.BuildVersion').split(" ")[0], xbmc.getInfoLabel('System.BuildVersion'),
             osname, __version__, '---')
-
+        ua = 'Relict-XBMC/16.1-RC2 (16.1-RC2 Git:20160328-be20e8a; nt win32; 2.7.8)  iptv/0.10 user/---'
         self.plugin.log('[sovok.TV] UA: %s' % ua)
         return ua
 
@@ -229,7 +229,7 @@ class SovokApi:
     def get_archive_hours(self, channel_id):
         archive_hours = self.db.get_archive_hours(channel_id)
         self.plugin.log(u'First retrieving archive hours for channel %s :%s ' % (channel_id, archive_hours))
-        if archive_hours is None:
+        if archive_hours is None or archive_hours == 0:
             archive_channels_list = self._get_archive_channels_list()
             self.db.import_archive_channels_list(archive_channels_list)
             archive_hours = self.db.get_archive_hours(channel_id)

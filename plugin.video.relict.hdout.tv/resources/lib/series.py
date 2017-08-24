@@ -29,6 +29,7 @@ def get_all_series_xml(tp):
 
 @request_new_series_it(False)
 def get_new_series_xml(tp):
+    xbmc.log("get new series list", 3)
     return common.get("List/new/XML/", tp)
 
 
@@ -41,6 +42,12 @@ def get_my_series_xml(tp):
 def get_my_new_series_xml(tp):
     return common.get("List/mynew/XML/", tp)
 
+
+def clear_cache():
+    request_all_series_it.purge()
+    request_new_series_it.purge()
+    request_my_series_it.purge()
+    request_my_new_series_it.purge()
 
 def show_new_my_series_list(afv, rfv, tp):
     xbmc.log("Show my new series list", 3)
@@ -90,6 +97,11 @@ def show_new_series_list(afv, rfv, tp, s):
     if tp == 'uaj':
         return show_new_series_list_ucc(afv, rfv, tp, s)
     root = ET.fromstring(s)
+    favorites = root.findall('fp/favorites/item/series')
+    fav_series = {}
+    for fav_item in favorites:
+        fav_serie = common.get_text(fav_item)
+        fav_series[fav_serie]=fav_serie
     days = root.findall('fp/episodesbyday/day')
     series = {}
     array_of_series = []
@@ -124,7 +136,9 @@ def show_new_series_list(afv, rfv, tp, s):
         serie_channel = get_serial_channel(tp, serie_obj, series[serie_id]['firstday'], list_of_episodes)
 
         url = sys.argv[0] + '?f=show_episodes&id=' + serie_id + '&tp=' + tp
-        item = get_list_item_for_serie_channel(serie_channel, tp, afv, rfv)
+        item = get_list_item_for_serie_channel(serie_channel, tp,
+                                               (serie_channel['id'] not in fav_series),
+                                               (serie_channel['id'] in fav_series))
         channel_items.append((url, item, True,))
 
     xbmcplugin.addDirectoryItems(handle, channel_items, len(channel_items))
@@ -241,12 +255,12 @@ def get_serial_channel(tp, xml_obj, last_update_time=None, list_of_episodes=None
 
 
 def get_list_item_for_serie_channel(serie_channel, tp, afv, rfv):
-    item = xbmcgui.ListItem(serie_channel['title'], iconImage=serie_channel['small_image'],
+    item = xbmcgui.ListItem(('*' if rfv else '') + serie_channel['title'], iconImage=serie_channel['small_image'],
                             thumbnailImage=serie_channel['small_image'])
     item.setInfo(type='video',
                  infoLabels={
                      'id': "hdout_tv_series_" + tp + "_" + serie_channel['id'],
-                     'title': serie_channel['title'],
+                     'title': ('*' if rfv else '') + serie_channel['title'],
                      'genre': serie_channel['genre'],
                      'year': serie_channel['year'],
                      'orignaltitle': serie_channel['etitle'],
@@ -274,16 +288,17 @@ def get_list_item_for_serie_channel(serie_channel, tp, afv, rfv):
     if tp == 'uaj':
         if afv:
             item.addContextMenuItems(
-                [(lang(30311), 'XBMC.RunPlugin(%s?f=addToFav&id=%s&tp=uaj)' % (sys.argv[0], id),)])
+                [(lang(30311), 'XBMC.RunPlugin(%s?f=addToFav&id=%s&tp=uaj)' % (sys.argv[0], serie_channel['id']),)])
         if rfv:
             item.addContextMenuItems(
-                [(lang(30312), 'XBMC.RunPlugin(%s?f=rmFromFav&id=%s&tp=uaj)' % (sys.argv[0], id),)])
+                [(lang(30312), 'XBMC.RunPlugin(%s?f=rmFromFav&id=%s&tp=uaj)' % (sys.argv[0], serie_channel['id']),)])
     else:
         if afv:
             item.addContextMenuItems(
-                [(lang(30301), 'XBMC.RunPlugin(%s?f=addToFav&id=%s&tp=hd)' % (sys.argv[0], id),)])
+                [(lang(30301), 'XBMC.RunPlugin(%s?f=addToFav&id=%s&tp=hd)' % (sys.argv[0], serie_channel['id']),)])
         if rfv:
             item.addContextMenuItems(
-                [(lang(30302), 'XBMC.RunPlugin(%s?f=rmFromFav&id=%s&tp=hd)' % (sys.argv[0], id),)])
+                [(lang(30302), 'XBMC.RunPlugin(%s?f=rmFromFav&id=%s&tp=hd)' % (sys.argv[0], serie_channel['id']),)])
 
     return item
+

@@ -89,7 +89,7 @@ def show_episode(pv):
         etitle = common.getVal(i[0], 'etitle')
 
         smark = common.getVal(i[0], 'smark')
-     +   server = common.getVal(i[0], 'server')
+        server = common.getVal(i[0], 'server')
         series = common.getVal(i[0], 'series')
 
         if pv['tp'] == 'uaj':
