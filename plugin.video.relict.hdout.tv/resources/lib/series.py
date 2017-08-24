@@ -18,7 +18,7 @@ request_new_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugi
                                         minutes=50)
 request_my_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.relict.hdout.tv/my_series'),
                                        minutes=1)
-request_my_new_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.relict.video.hdout.tv/my_new_series'),
+request_my_new_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.relict.hdout.tv/my_new_series'),
                                            minutes=1)
 
 
