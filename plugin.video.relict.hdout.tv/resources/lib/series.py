@@ -8,17 +8,17 @@ import xmltodict
 import resources.lib.fscache as fscache
 
 handle = int(sys.argv[1])
-config = xbmcaddon.Addon(id='plugin.video.hdout.tv')
+config = xbmcaddon.Addon(id='plugin.video.relict.hdout.tv')
 lang = config.getLocalizedString
 thumb = os.path.join(os.getcwd().replace(';', ''), "icon.png")
 
-request_all_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.hdout.tv/all_series'),
+request_all_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.relict.hdout.tv/all_series'),
                                         minutes=50)
-request_new_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.hdout.tv/new_series'),
+request_new_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.relict.hdout.tv/new_series'),
                                         minutes=50)
-request_my_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.hdout.tv/my_series'),
+request_my_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.relict.hdout.tv/my_series'),
                                        minutes=1)
-request_my_new_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.hdout.tv/my_new_series'),
+request_my_new_series_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.relict.video.hdout.tv/my_new_series'),
                                            minutes=1)
 
 

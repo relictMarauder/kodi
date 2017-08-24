@@ -8,7 +8,7 @@ import series as hdout_series
 import xml.dom.minidom
 import json
 
-request_all_episodes_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.hdout.tv/episode'),
+request_all_episodes_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.relict.hdout.tv/episode'),
                                           seconds=5)
 
 

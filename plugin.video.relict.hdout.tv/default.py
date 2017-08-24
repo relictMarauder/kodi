@@ -15,7 +15,7 @@ debug = RemoteDebug(False)
 debug.start()
 
 # Plugin config
-config = xbmcaddon.Addon(id='plugin.video.hdout.tv')
+config = xbmcaddon.Addon(id='plugin.video.relict.hdout.tv')
 lang = config.getLocalizedString
 login = config.getSetting('login')
 password = config.getSetting('password')

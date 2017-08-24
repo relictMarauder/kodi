@@ -11,7 +11,7 @@ import htmlentitydefs
 import zlib
 
 handle = int(sys.argv[1])
-config = xbmcaddon.Addon(id='plugin.video.hdout.tv')
+config = xbmcaddon.Addon(id='plugin.video.relict.hdout.tv')
 lang = config.getLocalizedString
 thumb = os.path.join(os.getcwd().replace(';', ''), "icon.png")
 plugin = 'HDOut.TV'
