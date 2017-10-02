@@ -2,7 +2,7 @@
 <addons>
 <addon id="plugin.video.relict.hdout.tv"
        name="HDOut.TV"
-       version="0.0.3"
+       version="0.0.4"
        provider-name="hdout">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>

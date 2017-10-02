@@ -11,6 +11,9 @@ import json
 request_all_episodes_it = fscache.FSCache(xbmc.translatePath('special://temp/plugin.video.relict.hdout.tv/episode'),
                                           seconds=5)
 
+config = xbmcaddon.Addon(id='plugin.video.relict.hdout.tv')
+lang = config.getLocalizedString
+
 
 @request_all_episodes_it(False)
 def get_all_episodes_xml(id, tp):
@@ -44,7 +47,6 @@ def show_episodes(_pv):
                 # title = gettext(episode, 'title')
                 # etitle = gettext(episode, 'etitle')
 
-
                 img = get_episode_logo(_pv, _pv['tp'], type, server, mark, series, snum, enum)
                 if img is None:
                     img = simg
@@ -64,6 +66,12 @@ def show_episodes(_pv):
                 watched_obj = root.find("aview/i[@id='%s']" % id)
                 if watched_obj is not None:
                     item.setInfo('Video', {'playcount': 1})
+                    item.addContextMenuItems(
+                        [(lang(30314),
+                          'XBMC.RunPlugin(%s?f=unmark_viewed&id=%s&tp=%s)' % (sys.argv[0], id, _pv['tp']),)])
+                else:
+                    item.addContextMenuItems(
+                        [(lang(30313), 'XBMC.RunPlugin(%s?f=mark_viewed&id=%s&tp=%s)' % (sys.argv[0], id, _pv['tp']),)])
 
                 episode_items.append((url, item, True,))
             # episode_items = episode_items.reverse()
@@ -117,8 +125,8 @@ def show_episode(pv):
             'episode': enum})
         player = xbmc.Player()
         player.play(videourl, item)
-        xbmc.sleep(2000)
-        if wait_for_plaing(player, videourl, 3):
+        wait_for_playng_start(player, 40)
+        if wait_for_playng(player, videourl, 5):
             # xbmc.sleep(3000)
 
             if pv['tp'] == 'uaj':
@@ -135,7 +143,7 @@ def show_episode(pv):
                     common.append_subtitle(smark, "en", suburl)
                 elif sub_f == 1:
                     common.append_subtitle(smark, "f", suburl)
-            if wait_for_plaing(player, videourl, 3):
+            if wait_for_playng(player, videourl, 10):
                 mark_video_as_viewed(pv['id'], lenght, pv['tp'])
     else:
         e = d.getElementsByTagName('error')
@@ -153,6 +161,7 @@ def show_episode(pv):
         else:
             common.show_message(common.lang(30003), common.lang(30008))
             return False
+    xbmc.log("End show episode", 4)
     return True
 
 
@@ -163,20 +172,32 @@ def rpc(method, **params):
 
 
 def mark_video_as_viewed(episodeId, lenght, tp):
-    #xbmc.log('Mark viewed:%s' % (episodeId), 4)
+    xbmc.log('Mark viewed:%s' % (episodeId), 4)
     common.get('?usecase=UpdateViewTime&t=%s&eid=%s' % (str(lenght), str(episodeId)), tp)
 
 
-def wait_for_plaing(player, url, wait_time):
+def wait_for_playng(player, url, wait_time):
     wait_count = wait_time * 4
     count = 0
     while count < wait_count:
         if player.isPlayingVideo() and player.getPlayingFile() == url:
-            xbmc.sleep(250)
+            xbmc.sleep(50)
             count += 1
         else:
             xbmc.log('PlayingStatus:%s,Url:%s' % (player.isPlayingVideo(), player.getPlayingFile()), 4)
             return False
+    return True
+
+
+def wait_for_playng_start(player,  wait_time):
+    wait_count = wait_time * 4
+    count = 0
+    while count < wait_count:
+        if not player.isPlayingVideo():
+            xbmc.sleep(100)
+            count += 1
+        else:
+            return True
     return True
 
 

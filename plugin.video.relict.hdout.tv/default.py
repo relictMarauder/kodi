@@ -21,7 +21,7 @@ login = config.getSetting('login')
 password = config.getSetting('password')
 
 handle = int(sys.argv[1])
-##thumb = os.path.join(os.getcwd().replace(';', ''), "icon.png")
+# thumb = os.path.join(os.getcwd().replace(';', ''), "icon.png")
 thumb = os.path.join(config.getAddonInfo('path'), "icon.png")
 
 plugin = 'HDOut.TV'
@@ -57,12 +57,26 @@ def get_item(lang_id, url):
              True,))
 
 
+def mark_viewed(_pv):
+    hdout_common.get('?usecase=MarkEpisode&id=%s' % _pv['id'], _pv['tp'])
+    xbmc.sleep(12)
+    hdout_series.clear_cache()
+    xbmc.executebuiltin('Container.Refresh')
+
+
+def unmark_viewed(_pv):
+    hdout_common.get('?usecase=UnmarkEpisode&id=%s' % _pv['id'], _pv['tp'])
+    xbmc.sleep(12)
+    hdout_series.clear_cache()
+    xbmc.executebuiltin('Container.Refresh')
+
+
 def addToFav(pv):
     s = hdout_common.get('AddToFavorites/' + pv['id'] + '/', pv['tp'])
     if s is None:
         hdout_common.showMessage(lang(30003), lang(30004))
         return False
-    xbmc.sleep(10)
+    xbmc.sleep(12)
     hdout_series.clear_cache()
     xbmc.executebuiltin('Container.Refresh')
 
@@ -72,7 +86,7 @@ def rmFromFav(pv):
     if s is None:
         hdout_common.showMessage(lang(30003), lang(30004))
         return False
-    xbmc.sleep(10)
+    xbmc.sleep(12)
     hdout_series.clear_cache()
     xbmc.executebuiltin('Container.Refresh')
 
@@ -158,7 +172,8 @@ try:
         funs = ['show_series', 'show_new_series', 'show_my_series', 'show_episodes', 'show_episode', 'showRSS',
                 'show_new_my_series',
                 'openSettings',
-                'addToFav', 'rmFromFav']
+                'addToFav', 'rmFromFav',
+                'mark_viewed', 'unmark_viewed']
 
         pvm = get_params(pv)
         ping()
